@@ -1,0 +1,50 @@
+public class trgController
+{
+    public static void trgMethod(List<Contact> newList,Map<Id,Contact> oldMap)
+    {
+        Set<Id> accIds = new Set<Id>();
+
+        if(newList.size() > 0)
+        {
+            for(Contact newCon : newList)
+            {
+                if(oldMap != null)
+                {
+                    Contact oldCon = oldMap.get(newCon.Id);
+
+                    if(oldCon.AccountId != newCon.AccountId)
+                    {
+                        accIds.add(oldCon.AccountId);
+                        accIds.add(newCon.AccountId);
+                    }
+                    else
+                    {
+                        accIds.add(newCon.AccountId);
+                    }
+                }
+                else 
+                {
+                    accIds.add(newCon.AccountId);
+                }
+            }
+        }
+
+      
+        Map<Id,Account> accMap = new Map<Id,Account>([Select Id,nop__c,(Select Id from Contacts) from Account where Id IN : accIds]);
+        
+        if(newList.size() > 0)
+        {
+            for(Contact con : newList)
+            {
+            if(accMap.containsKey(con.AccountId))
+            {
+                Account acc = accMap.get(con.AccountId);
+                if(acc.Contacts.size() > 2)
+                {
+                    con.addError('This account already has 2 contacts no new contact can be inserted on this account');
+                }
+            }
+            }
+        }
+    }   
+}
