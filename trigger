@@ -24,3 +24,31 @@ trigger trg2 on Contact(after Insert,after Update,after Delete,after Undelete)
         }
     }
 }
+
+
+//CHATGPT VERSION
+trigger LimitContacts on Contact (before insert) {
+    // Get the account Ids of the new contacts
+    Set<Id> accountIds = new Set<Id>();
+    for (Contact con : Trigger.new) {
+        accountIds.add(con.AccountId);
+    }
+
+    // Count the number of contacts associated with each account
+    Map<Id, Integer> contactCount = new Map<Id, Integer>();
+    for (AggregateResult ar : [
+            SELECT AccountId, COUNT(Id) contactCount
+            FROM Contact
+            WHERE AccountId IN :accountIds
+            GROUP BY AccountId
+        ]) {
+        contactCount.put((Id)ar.get('AccountId'), (Integer)ar.get('contactCount'));
+    }
+
+    // Check if the number of contacts for each account exceeds the limit
+    for (Contact con : Trigger.new) {
+        if (contactCount.get(con.AccountId) >= 2) {
+            con.addError('An account can have maximum of 2 contacts');
+        }
+    }
+}
